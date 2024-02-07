@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Utility {
+
     public APIGatewayProxyResponseEvent createAPIResponse(String body, int statusCode, Map<String,String> headers)
     {
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();

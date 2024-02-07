@@ -1,108 +1,125 @@
 package com.rohit.services;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.rohit.utility.Utility;
 import com.rohit.model.Employee;
+import  com.rohit.dao.userDao;
 
-import java.util.HashMap;
-import java.util.Map;
+
 import java.util.List;
 
 public class Services {
-    private DynamoDBMapper mapper;
-    private static String jsonBody = null;
+
+    private String jsonBody = null;
+    private int statusCode ;
     Utility utility = new Utility();
     //Creating an instance of mapper class
-    public void initDB(){
-        AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
-        mapper = new DynamoDBMapper(client);
-    }
+    userDao user = new userDao();
 
-
-    public APIGatewayProxyResponseEvent saveEmployee(APIGatewayProxyRequestEvent request ,Context context)
+    public APIGatewayProxyResponseEvent saveEmployee(APIGatewayProxyRequestEvent request ,Context context) //working fine
     {
         try{
-            initDB();
-            context.getLogger().log("I am in Try block of saveEmployee method with data ==>"+request.getBody());
+            context.getLogger().log("Executing saveEmployee method with data ==>"+request.getBody());
             Employee employee = utility.convertStringToObj(request.getBody(), context);
-            context.getLogger().log("Data of ==>"+employee.getName());
-            mapper.save(employee);
-            context.getLogger().log("Data saved of  ==>"+employee.getName());
+            //Check if ID already exists --> return true
+            if(!user.CheckIfExist(employee.getEmpId()))
+            {
+                context.getLogger().log("Data of ==>"+employee.getName());
+                jsonBody= user.RegisterNewEmployee(employee);
+                statusCode = 201;//created
+            }
+            else{
+                throw new Exception("User already Exists");
+            }
+
+
         }
         catch(Exception e)
         {
-            context.getLogger().log("I am in catch block of saveEmployee method with data ==>"+request.getBody()+"/n Error is "+e.getMessage());
+            context.getLogger().log("Opps error in saveEmployee method  ==>"+request.getBody()+"/n Error is "+e.getMessage());
+            jsonBody = e.getMessage();
+            statusCode = 400;//bad request
         }
         finally{
-            return utility.createAPIResponse("Completed save method invoke",200,utility.createHeaders());
+            return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
-    public APIGatewayProxyResponseEvent getEmployees(APIGatewayProxyRequestEvent request, Context context)
+    public APIGatewayProxyResponseEvent getEmployees(APIGatewayProxyRequestEvent request, Context context) //working fine
     {
         try{
-            initDB();
-            context.getLogger().log("I am in Try block of getEmployees method");
-            List<Employee> employees = mapper.scan(Employee.class,new DynamoDBScanExpression());
+            context.getLogger().log("Executing getEmployees method");
+            List<Employee> employees = user.FindAllEmployee();
             jsonBody =  utility.convertListToString(employees,context);
-            context.getLogger().log("fetch employee List:::" + jsonBody);
+            statusCode = 202;//Accepted
         }
         catch(Exception e)
         {
-            context.getLogger().log("I am in catch block of getEmployee method with data ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            context.getLogger().log("Opps error with ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            jsonBody = e.getMessage();
+            statusCode = 404; // Not found
         }
         finally{
-            return utility.createAPIResponse(jsonBody,200,utility.createHeaders());
+            return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
-    public APIGatewayProxyResponseEvent getEmployeeById(APIGatewayProxyRequestEvent request, Context context)
+    public APIGatewayProxyResponseEvent getEmployeeById(APIGatewayProxyRequestEvent request, Context context) //working fine
     {
         try{
-            initDB();
-            context.getLogger().log("I am in Try block of getEmployeeByID method");
+
+            context.getLogger().log("Executing getEmployeeByID method");
             String empId = request.getPathParameters().get("empId");
-            Employee employee =  mapper.load(Employee.class,empId)  ;
+            Employee employee =  user.FindEmployeeById(empId)  ;
             if(employee!=null) {
                 jsonBody = utility.convertObjToString(employee, context);
                 context.getLogger().log("fetch employee By ID:::" + jsonBody);
+                statusCode = 200;//ok
             }else{
-                jsonBody = "Employee Not Found Exception :" + empId;
+                jsonBody = "Employee Not Found Exception : for Employee ID::" + empId;
+                statusCode = 404;
             }
         }
         catch(Exception e)
         {
-            context.getLogger().log("I am in catch block of getEmployeeByID method with data ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            context.getLogger().log("Error in getEmployeeByID method  ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            jsonBody = e.getMessage();
+            statusCode = 400;
         }
         finally{
-            return utility.createAPIResponse(jsonBody,200,utility.createHeaders());
+            return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
-    public APIGatewayProxyResponseEvent deleteById(APIGatewayProxyRequestEvent request, Context context)
+    public APIGatewayProxyResponseEvent deleteById(APIGatewayProxyRequestEvent request, Context context) //working fine
     {
         try{
-            initDB();
             String empId = request.getPathParameters().get("empId");
-            Employee employee =  mapper.load(Employee.class,empId)  ;
-            if(employee!=null) {
-                mapper.delete(employee);
-                context.getLogger().log("data deleted successfully :::" + empId);
-                jsonBody = "Data deleted SuccessFully";
-            }else{
-                jsonBody = "Employee Not Found Exception :" + empId;
+            if(user.CheckIfExist(empId))
+            {
+                jsonBody = user.DeleteEmployeeById(empId);
+                statusCode = 200;
             }
+            else{
+                throw new Exception("Employee does not exists");
+            }
+
         }
         catch(Exception e)
         {
-            context.getLogger().log("I am in catch block of DeleteEmployee method with id ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            context.getLogger().log("Opps error with  ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            jsonBody = e.getMessage();
+            statusCode = 400;
         }
         finally{
-            return utility.createAPIResponse(jsonBody,200,utility.createHeaders());
+            return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
+    }
+    public boolean validateInput(APIGatewayProxyRequestEvent request)
+    {
+        return true;
+    }
+    public APIGatewayProxyResponseEvent ValidationErrorResponse(String message){
+        return utility.createAPIResponse(message,406,utility.createHeaders());//Not Acceptable
     }
 
 
