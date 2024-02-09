@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+    <form id="myForm" style="border: 1px solid #ccc">
+        <div class="container">
+          <h1>Login Page</h1>
+  
+          <label for="email"><b>Employee ID</b></label>
+          <input type="text" placeholder="Enter ID" id="empId" name="empId" required />
+  
+          <label for="psw"><b>Password</b></label>
+          <input
+            type="password"
+            placeholder="Enter Password"
+            id="password"
+            name="password"
+            required
+          />
+          <div class="clearfix">
+            <button type="button" onclick="window.location.href='index.html'" class="cancelbtn">Create an account</button>
+            <button type="submit"  class="signupbtn">LOGIN</button>
+            <button type="button" onclick="window.location.href='checkuser.html'" >Check user</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="showResponse">
+
+      </div>
+      <script>
+        document.getElementById('myForm').addEventListener('submit', function(events){
+    events.preventDefault();
+      var empId = document.getElementById('empId').value;
+      var password = document.getElementById('password').value;
+      var formData = {
+        empId: empId,
+        password: password
+      }
+        var jsonData = JSON.stringify(formData);
+        var apiGatewayurl = "https://1hka1zi1tg.execute-api.ap-south-1.amazonaws.com/dev/employee/login";
+        fetch(apiGatewayurl, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:jsonData,
+        }).then(response => {
+          if(response.ok)
+          {
+            document.getElementById("showResponse").innerHTML = "Login Successfull";
+          }
+          else{
+            document.getElementById("showResponse").innerHTML = "Invalid Login or Password";
+
+          }
+          console.log(response);
+        })
+        .then(data => {
+          console.log("success:", data);
+        })
+        .catch((error) =>{
+          console.error('Error', error);
+        });
+      });
+      </script>
+
+     
+      
+</body>
+</html>

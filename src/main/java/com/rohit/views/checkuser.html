@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checking User</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form style="border: 1px solid #ccc">
+        <div class="container">
+          <h1>User Details</h1>
+          <label for="email"><b>Employee ID</b></label>
+          <input type="text" placeholder="Enter Employee ID" id="empId" name="empId" required />
+
+          <div class="clearfix">
+            <button type="button" onclick="getData()">Check user</button>
+          </div>
+        </div>
+      </form>
+      <div id="showResponse">
+        
+            
+        
+      </div>
+      <script>
+        function getData(){
+            
+            empId = document.getElementById("empId").value;
+        console.log(empId);
+        url = "https://1hka1zi1tg.execute-api.ap-south-1.amazonaws.com/dev/employee/"+empId;
+        fetch(url)
+        .then(response =>{
+            console.log(response);
+            if(!response.ok)
+            {
+                document.getElementById("showResponse").innerHTML ="No user Found ";
+            }
+            return response.json();
+        })
+        .then(data =>{
+            console.log(data);  
+                document.getElementById("showResponse").innerHTML ="<table id='data'><tr><td>User Id:</td><td>"+data.empId+"</td></tr><tr><td>Name:</td><td>"+data.name+"</td></tr><tr><td>Email:</td><td>"+data.email+"</td></tr><tr><td>Number:</td><td>"+data.number+"</td></tr></table>";
+            
+        })
+        .catch(error => {
+            console.error('Error: ',error)});
+        }
+        
+        </script>
+</body>
+</html>
