@@ -42,7 +42,9 @@ public class UserDao {
     {
         initDB();
         logger.info("Data of Employee ID:: "+empId+" is fetching");
-        return mapper.load(Employee.class,empId);
+        Employee employee = mapper.load(Employee.class,empId);
+        employee.setPassword("*****");
+        return employee;
     }
     public String deleteEmployeeById(String empId){
         initDB();

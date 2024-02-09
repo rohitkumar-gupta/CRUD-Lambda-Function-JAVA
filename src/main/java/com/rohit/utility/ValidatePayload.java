@@ -15,7 +15,6 @@ public class ValidatePayload {
     }
     public boolean checkID(String empId)
     {
-
         return true;
     }
     public boolean checkPassword(String password)
