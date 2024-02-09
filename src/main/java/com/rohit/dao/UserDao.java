@@ -12,17 +12,17 @@ import org.apache.logging.log4j.LogManager;
 
 import java.util.List;
 
-public class userDao {
-    static final Logger logger = LogManager.getLogger(userDao.class);
+public class UserDao {
+    static final Logger logger = LogManager.getLogger(UserDao.class);
 
     private DynamoDBMapper mapper;
     public  void initDB(){
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
         mapper = new DynamoDBMapper(client);
     }
-    public boolean CheckIfExist(String empId)
+    public boolean checkIfExist(String empId)
     {
-        Employee employee = FindEmployeeById(empId);
+        Employee employee = findEmployeeById(empId);
         return employee != null;
     }
     public  String registerNewEmployee(Employee employee)
@@ -32,19 +32,19 @@ public class userDao {
         logger.info("User registered Successfully Named:: "+employee.getName());
         return "Successfully Registered for "+employee.getName();
     }
-    public List<Employee> FindAllEmployee()
+    public List<Employee> findAllEmployee()
     {
         initDB();
         logger.info("Getting all the user data");
         return mapper.scan(Employee.class,new DynamoDBScanExpression());
     }
-    public Employee FindEmployeeById(String empId)
+    public Employee findEmployeeById(String empId)
     {
         initDB();
         logger.info("Data of Employee ID:: "+empId+" is fetching");
         return mapper.load(Employee.class,empId);
     }
-    public String DeleteEmployeeById(String empId){
+    public String deleteEmployeeById(String empId){
         initDB();
         Employee employee =  mapper.load(Employee.class,empId) ;
         mapper.delete(employee);
@@ -53,7 +53,7 @@ public class userDao {
     }
     public boolean validateCredentials(String empId,String password)
     {
-        Employee employee =  FindEmployeeById(empId);
+        Employee employee =  findEmployeeById(empId);
         if(employee!=null)  return password.equals(employee.getPassword());
         return false;
     }

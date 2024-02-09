@@ -26,8 +26,8 @@ public class LambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent
                         case "POST":
                             return service.validateUser(request,context);
                         default:
-                            logger.fatal("UnSupportedOperationException triggered for Login");
-                            return service.ErrorResponse("UnSupportedOperationException triggered for Login",405);
+                            logger.fatal("UnSupportedOperationException triggered for Login :: " +method);
+                            return service.errorResponse("UnSupportedOperationException triggered for Login :: "+method,405);
                     }
 
             }else{
@@ -37,9 +37,8 @@ public class LambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent
                             if (service.validateInput(request, context)) {
                                 return service.saveEmployee(request, context);
                             } else {
-                                logger.fatal("InvalidPropertiesFormatException triggered");
-                                return service.ErrorResponse("InvalidPropertiesFormatException triggered for Register",406);
-
+                                logger.fatal("InvalidPropertiesFormatException triggered :: "+method);
+                                return service.errorResponse("InvalidPropertiesFormatException triggered for Register :: "+method,406);
                             }
 
                         case "GET":
@@ -51,8 +50,8 @@ public class LambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent
                         case "DELETE":
                             return service.deleteById(request, context);
                         default:
-                            logger.fatal("UnSupportedOperationException triggered");
-                            return service.ErrorResponse("UnSupportedOperationException triggered",405);
+                            logger.fatal("UnSupportedOperationException triggered ::"+method);
+                            return service.errorResponse("UnSupportedOperationException triggered :: "+method,405);
                     }
             }
         }

@@ -2,7 +2,7 @@ package com.rohit.utility;
 
 import com.rohit.model.Employee;
 
-public class validatePayload {
+public class ValidatePayload {
     public boolean checkAll(Employee e)
     {
         boolean result;
