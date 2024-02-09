@@ -6,61 +6,107 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.rohit.utility.Utility;
 import com.rohit.model.Employee;
 import  com.rohit.dao.userDao;
+import com.rohit.utility.validatePayload;
+import org.apache.http.auth.InvalidCredentialsException;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 
 import java.util.List;
 
+
 public class Services {
+    static final Logger logger = LogManager.getLogger(Services.class);
 
     private String jsonBody = null;
     private int statusCode ;
     Utility utility = new Utility();
     //Creating an instance of mapper class
     userDao user = new userDao();
+    public boolean checkForLogin(APIGatewayProxyRequestEvent request,Context context)
+    {
+        String url = request.getPath();
+        logger.info("Accessing:: "+url);
+        if(utility.validateLoginURL(url))
+        {
+            return true;
+        }
+        return false;
+    }
+    public APIGatewayProxyResponseEvent validateUser(APIGatewayProxyRequestEvent request,Context context)
+    {
+        try{
+            logger.debug("Executing the validate user");
+            Employee employee = utility.convertStringToObj(request.getBody(), context);
+            if(user.validateCredentials(employee.getEmpId(), employee.getPassword()))
+            {
+                jsonBody = "Login SuccessFull";
+                statusCode = 202;
+                logger.info(jsonBody);
+            }
+            else{
+                jsonBody = "UserId or Password is Invalid";
+                statusCode = 401;
+                throw new InvalidCredentialsException(jsonBody);
+            }
+        }
+        catch(InvalidCredentialsException e)
+        {
+            logger.error(e.getMessage());
+        }
+        catch(Exception e)
+        {
+            logger.error(e.getMessage());
+        }
+        finally{
+            logger.info("Completed execution of validateUser method");
+            return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
+        }
+    }
 
     public APIGatewayProxyResponseEvent saveEmployee(APIGatewayProxyRequestEvent request ,Context context) //working fine
     {
         try{
-            context.getLogger().log("Executing saveEmployee method with data ==>"+request.getBody());
+            logger.info("Executing saveEmployee method with data ==>"+request.getBody());
             Employee employee = utility.convertStringToObj(request.getBody(), context);
             //Check if ID already exists --> return true
             if(!user.CheckIfExist(employee.getEmpId()))
             {
-                context.getLogger().log("Data of ==>"+employee.getName());
-                jsonBody= user.RegisterNewEmployee(employee);
+                jsonBody= user.registerNewEmployee(employee);
                 statusCode = 201;//created
             }
             else{
                 throw new Exception("User already Exists");
             }
-
-
         }
         catch(Exception e)
         {
-            context.getLogger().log("Opps error in saveEmployee method  ==>"+request.getBody()+"/n Error is "+e.getMessage());
             jsonBody = e.getMessage();
+            logger.warn(jsonBody);
             statusCode = 400;//bad request
         }
         finally{
+            logger.debug("Completed exectution of saveEmployee method");
             return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
     public APIGatewayProxyResponseEvent getEmployees(APIGatewayProxyRequestEvent request, Context context) //working fine
     {
         try{
-            context.getLogger().log("Executing getEmployees method");
+            logger.debug("Executing getEmployee method");
             List<Employee> employees = user.FindAllEmployee();
             jsonBody =  utility.convertListToString(employees,context);
             statusCode = 202;//Accepted
         }
         catch(Exception e)
         {
-            context.getLogger().log("Opps error with ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            logger.error(e.getMessage());
             jsonBody = e.getMessage();
             statusCode = 404; // Not found
         }
         finally{
+            logger.debug("Completed execution of getEmployee method");
             return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
@@ -68,25 +114,24 @@ public class Services {
     {
         try{
 
-            context.getLogger().log("Executing getEmployeeByID method");
+            logger.debug("Executing getEmployeeByID method");
             String empId = request.getPathParameters().get("empId");
             Employee employee =  user.FindEmployeeById(empId)  ;
             if(employee!=null) {
                 jsonBody = utility.convertObjToString(employee, context);
-                context.getLogger().log("fetch employee By ID:::" + jsonBody);
                 statusCode = 200;//ok
             }else{
-                jsonBody = "Employee Not Found Exception : for Employee ID::" + empId;
-                statusCode = 404;
+                throw new Exception("User Not Found");
             }
         }
         catch(Exception e)
         {
-            context.getLogger().log("Error in getEmployeeByID method  ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
+            logger.error(e.getMessage());
             jsonBody = e.getMessage();
-            statusCode = 400;
+            statusCode = 404;
         }
         finally{
+            logger.debug("Completed execution of getEmployeeById method");
             return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
@@ -94,6 +139,7 @@ public class Services {
     {
         try{
             String empId = request.getPathParameters().get("empId");
+            logger.debug("Delete method is executing for EmpID::"+empId);
             if(user.CheckIfExist(empId))
             {
                 jsonBody = user.DeleteEmployeeById(empId);
@@ -106,20 +152,23 @@ public class Services {
         }
         catch(Exception e)
         {
-            context.getLogger().log("Opps error with  ==>"+request.getPathParameters()+"/n Error is "+e.getMessage());
             jsonBody = e.getMessage();
+            logger.error(jsonBody);
             statusCode = 400;
         }
         finally{
+            logger.debug("Completed execution of deleteEmployeeById method");
             return utility.createAPIResponse(jsonBody,statusCode,utility.createHeaders());
         }
     }
-    public boolean validateInput(APIGatewayProxyRequestEvent request)
+    public boolean validateInput(APIGatewayProxyRequestEvent request,Context context)
     {
-        return true;
+        Employee employee = utility.convertStringToObj(request.getBody(), context);
+        validatePayload input = new validatePayload();
+        return input.checkAll(employee);
     }
-    public APIGatewayProxyResponseEvent ValidationErrorResponse(String message){
-        return utility.createAPIResponse(message,406,utility.createHeaders());//Not Acceptable
+    public APIGatewayProxyResponseEvent ErrorResponse(String message,int StatusCode){
+        return utility.createAPIResponse(message,statusCode,utility.createHeaders());//Not Acceptable
     }
 
 

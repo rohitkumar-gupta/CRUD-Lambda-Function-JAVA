@@ -7,11 +7,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rohit.model.Employee;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Utility {
+    static final Logger logger = LogManager.getLogger(Utility.class);
 
     public APIGatewayProxyResponseEvent createAPIResponse(String body, int statusCode, Map<String,String> headers)
     {
@@ -26,6 +30,7 @@ public class Utility {
         headers.put("Content-Type","application/json");
         headers.put("X-amazon-author","Rohit");
         headers.put("X-amazon-apiVersion","v1");
+        headers.put("Access-Control-Allow-Origin", "*");
         return  headers ;
     }
 
@@ -55,6 +60,11 @@ public class Utility {
             context.getLogger().log( "Error while converting obj to string:::" + e.getMessage());
         }
         return jsonBody;
+    }
+    public boolean validateLoginURL(String url)
+    {
+        String URL = "/employee/login";
+        return URL.equals(url);
     }
 
 
