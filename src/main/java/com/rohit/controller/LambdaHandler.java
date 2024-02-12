@@ -37,8 +37,8 @@ public class LambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent
                             if (service.validateInput(request, context)) {
                                 return service.saveEmployee(request, context);
                             } else {
-                                logger.fatal("InvalidPropertiesFormatException triggered :: "+method);
-                                return service.errorResponse("InvalidPropertiesFormatException triggered for Register :: "+method,406);
+                                logger.fatal("InvalidPropertiesFormatException triggered ");
+                                return service.errorResponse("InvalidPropertiesFormatException triggered for Register ",406);
                             }
 
                         case "GET":

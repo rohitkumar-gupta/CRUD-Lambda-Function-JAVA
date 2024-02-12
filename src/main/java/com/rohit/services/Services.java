@@ -116,7 +116,7 @@ public class Services {
 
             logger.debug("Executing getEmployeeByID method");
             String empId = request.getPathParameters().get("empId");
-            Employee employee =  user.findEmployeeById(empId)  ;
+            Employee employee =  user.searchEmployeeById(empId)  ;
             if(employee!=null) {
                 jsonBody = utility.convertObjToString(employee, context);
                 statusCode = 200;//ok

@@ -22,7 +22,7 @@ public class UserDao {
     }
     public boolean checkIfExist(String empId)
     {
-        Employee employee = findEmployeeById(empId);
+        Employee employee =  findEmployeeById(empId);
         return employee != null;
     }
     public  String registerNewEmployee(Employee employee)
@@ -39,6 +39,12 @@ public class UserDao {
         return mapper.scan(Employee.class,new DynamoDBScanExpression());
     }
     public Employee findEmployeeById(String empId)
+    {
+        initDB();
+        logger.info("Data of Employee ID:: "+empId+" is fetching");
+        return  mapper.load(Employee.class,empId);
+    }
+    public Employee searchEmployeeById(String empId)
     {
         initDB();
         logger.info("Data of Employee ID:: "+empId+" is fetching");
